@@ -8,5 +8,5 @@
 
 class ArticlespiderPipeline(object):
     def process_item(self, item, spider):
-        print('ArticlespiderPipeline')
+        print('in ArticlespiderPipeline')
         return item

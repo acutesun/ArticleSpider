@@ -12,19 +12,32 @@ class JobbolesSpider(scrapy.Spider):
     start_urls = ["http://blog.jobbole.com/all-posts"]
 
     def parse(self, response):
-        print('parses.............')
-        post_urls = response.css('#archive .floated-thumb .post-thumb a::attr(href)').extract()
-        for post_url in post_urls:
+        # 1. 获取当前页面的 article url 和image_url列表, 并交给scrapy下载
+        post_nodes = response.css('#archive .floated-thumb .post-thumb a')
+        for post_node in post_nodes:
+            post_url = post_node.css('::attr(href)').extract_first()
+            # 获取图片的url
+            image_url = post_node.css('img::attr(src)').extract_first()
+            print('image_url', image_url)
             print(post_url)
-            yield Request(url=post_url, callback=self.parse_css)
-            print(post_url)
+            yield Request(url=parse.urljoin(response.url, post_url),        # 注意这里我暂时改为post_url，因为数据太多了。
+                          meta={'front_image_url': image_url}, callback=self.parse_css)
 
+        # 2. 获取下一页url列表并交给scrapy下载
+        # <a class ="next page-numbers" href="http://blog.jobbole.com/all-posts/page/3/" > 下一页 » < / a >
+        # 两个平级的class中间不使用空格
+        next_url = response.css('.next.page-numbers::attr(href)').extract_first()
+        print(next_url)
+        if next_url:
+            print(parse.urljoin(response.url, next_url))
+            yield Request(parse.urljoin(response.url, post_url), callback=self.parse)
+            print('yield request')
 
     def parse_css(self, response):
-        print('parse_css.....')
-        # article_item = AticleItem()
+        article_item = AticleItem()
 
-        # front_image_url = response.meta.get('front_image_url', '')  # 获取文章封面图
+        front_image_url = response.meta.get('front_image_url', '')  # 获取文章封面图
+        print('front_image_url', front_image_url)
 
         # css选择器提取信息 response.css().extract_first() 选取第一个
         title = response.css('.entry-header h1::text').extract()  # 选取所有包含entry-header的class元素下的h1元素的文本内容
@@ -39,13 +52,11 @@ class JobbolesSpider(scrapy.Spider):
             great_nums = 0
         # 收藏
         bookmark_nums = response.css('.post-adds .bookmark-btn::text').extract_first('')
-        print(bookmark_nums)
         bookmark_re = re.match(r'.*?(\d+).*', bookmark_nums)
         if bookmark_re:
             bookmark_nums = int(bookmark_re.group(1))
         else:
             bookmark_nums = 0
-        print(bookmark_nums)
         # 评论
         comment_nums = response.css('a[href="#article-comment"] span::text').extract_first('')
         article_re = re.match(r'.*?(\d+).*', comment_nums)
@@ -60,18 +71,16 @@ class JobbolesSpider(scrapy.Spider):
         # 所有内容
         content = response.css('div.entry').extract_first()
 
-
         # 将所有的值填充到item
+        article_item['url'] = response.url
+        article_item['front_image_url'] = front_image_url
+        article_item['create_time'] = create_time
+        article_item['great_nums'] = great_nums
+        article_item['comment_nums'] = comment_nums
+        article_item['tags'] = tags
+        article_item['content'] = content
 
-        # article_item['url'] = response.url
-        # article_item['front_image_url'] = front_image_url
-        # article_item['create_time'] = create_time
-        # article_item['great_nums'] = great_nums
-        # article_item['comment_nums'] = comment_nums
-        # article_item['tags'] = tags
-        # article_item['content'] = content
-
-        # yield article_item  # 生成的item会传入到pipelines中
+        yield article_item  # 生成的item会传入到pipelines中
 
 
     # def parse_xpath(self, response):
