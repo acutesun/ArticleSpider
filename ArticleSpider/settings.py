@@ -65,12 +65,13 @@ ROBOTSTXT_OBEY = False
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
-   'scrapy.pipelines.images.ImagesPipeline': 1,  # 配置这个pipeline下载图片文件
+   # 'scrapy.pipelines.images.ImagesPipeline': 1,  # 配置这个pipeline下载图片文件
+   # 'ArticleSpider.pipelines.ArticleImagePipeline': 2,
+   'ArticleSpider.pipelines.JsonWithExporterPipeline': 3,
 }
 IMAGES_URLS_FIELD = "front_image_url"  # 去item中找到图片的url
-IMAGES_STORE = '/python/ArticleSpider/image'
 project_dir = os.path.abspath(os.path.dirname(__file__))
-# IMAGES_STORE = os.path.join(project_dir, 'images')  # 配置图片下载路径
+IMAGES_STORE = os.path.join(project_dir, 'images')  # 配置图片下载路径
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -90,3 +91,6 @@ project_dir = os.path.abspath(os.path.dirname(__file__))
 #HTTPCACHE_DIR='httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES=[]
 #HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+
+HOST='127.0.0.1'

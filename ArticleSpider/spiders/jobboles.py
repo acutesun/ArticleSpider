@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import re
+import datetime
 from scrapy.http import Request
 from urllib import parse
 from ArticleSpider.items import AticleItem
+from ArticleSpider.utils import common
 
 
 class JobbolesSpider(scrapy.Spider):
@@ -72,11 +74,14 @@ class JobbolesSpider(scrapy.Spider):
         content = response.css('div.entry').extract_first()
 
         # 将所有的值填充到item
+        article_item['url_object_id'] = common.get_md5(response.url)
+        article_item['title'] = title
         article_item['url'] = response.url
-        article_item['front_image_url'] = front_image_url
+        article_item['front_image_url'] = [front_image_url]
         article_item['create_time'] = create_time
         article_item['great_nums'] = great_nums
         article_item['comment_nums'] = comment_nums
+        article_item['bookmark_nums'] = bookmark_nums
         article_item['tags'] = tags
         article_item['content'] = content
 
