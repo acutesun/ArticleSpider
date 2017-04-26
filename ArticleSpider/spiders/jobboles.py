@@ -42,7 +42,7 @@ class JobbolesSpider(scrapy.Spider):
         print('front_image_url', front_image_url)
 
         # css选择器提取信息 response.css().extract_first() 选取第一个
-        title = response.css('.entry-header h1::text').extract()  # 选取所有包含entry-header的class元素下的h1元素的文本内容
+        title = response.css('.entry-header h1::text').extract_first()  # 选取所有包含entry-header的class元素下的h1元素的文本内容
         create_time = response.css('p.entry-meta-hide-on-mobile::text').extract_first()
         if create_time:
             create_time = create_time.strip().replace('·', '').strip()
@@ -71,7 +71,7 @@ class JobbolesSpider(scrapy.Spider):
         tag_list = [e for e in tag_list if not e.strip().endswith('评论')]
         tags = ','.join(tag_list)
         # 所有内容
-        content = response.css('div.entry').extract_first()
+        content = response.css('div.entry').extract_first()[:100]
 
         # 将所有的值填充到item
         article_item['url_object_id'] = common.get_md5(response.url)

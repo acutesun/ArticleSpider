@@ -7,7 +7,9 @@
 from scrapy.pipelines.images import ImagesPipeline
 from scrapy.exporters import JsonItemExporter
 import MySQLdb
+import MySQLdb.cursors
 from twisted.enterprise import adbapi
+
 
 class ArticlespiderPipeline(object):
     def process_item(self, item, spider):
@@ -40,10 +42,29 @@ class JsonWithExporterPipeline(object):
 
 
 class MysqlPipeline(object):
+    def __init__(self):
+
+        self.conn = MySQLdb.connect('127.0.0.1', 'root', 'root', 'article', charset='utf8', use_unicode=True)
+        self.cursor = self.conn.cursor()
+
+    def process_item(self, item, spider):
+        # 执行具体的插入
+        insert_sql = 'insert into jobbole(url_object_id, title, url, create_time) VALUES (%s, %s, %s, %s)'
+        a, b, c, d = item['url_object_id'], item['title'], item['url'], item['create_time']
+        print(a, b, c,d)
+        self.cursor.execute(insert_sql, (a, b, c, d))
+        # self.cursor.execute('select * from jobbole')
+        self.conn.commit()
+        return item
+
+
+class MysqlTwistedPipeline(object):
+
     def __init__(self, dbpool):
         self.dbpool = dbpool
+
     @classmethod
-    def from_setting(cls,settings):
+    def from_settings(cls, settings):
         dbparams = dict(
             host=settings['MYSQL_HOST'],
             db=settings['MYSQL_DBNAME'],
@@ -68,8 +89,13 @@ class MysqlPipeline(object):
 
     def do_insert(self, cursor, item):
         # 执行具体的插入
-        insert_sql = '''
-                        insert into jobbole(title, url, create_time)
-                        VALUES (%s, %s, %s)
-         '''
-        cursor.execute(insert_sql, (item['title'], item['url'], item['create_time']))
+        # insert_sql = '''
+        #                 insert into jobbole(url_object_id, title, url, create_time)
+        #                 VALUES (%s, %s, %s, %s)
+        #  '''
+        # cursor.execute(insert_sql, (item['url_object_id'], item['title'], item['url'], item['create_time']))
+
+        insert_sql = 'insert into jobbole(url_object_id, title, url, create_time) VALUES (%s, %s, %s, %s)'
+        a, b, c, d = item['url_object_id'], item['title'], item['url'], item['create_time']
+        print(a, b, c, d)
+        cursor.execute(insert_sql, (a, b, c, d))

@@ -67,7 +67,8 @@ ITEM_PIPELINES = {
    'ArticleSpider.pipelines.ArticlespiderPipeline': 300,
    # 'scrapy.pipelines.images.ImagesPipeline': 1,  # 配置这个pipeline下载图片文件
    # 'ArticleSpider.pipelines.ArticleImagePipeline': 2,
-   'ArticleSpider.pipelines.JsonWithExporterPipeline': 3,
+   # 'ArticleSpider.pipelines.JsonWithExporterPipeline': 3,
+   'ArticleSpider.pipelines.MysqlTwistedPipeline': 1,
 }
 IMAGES_URLS_FIELD = "front_image_url"  # 去item中找到图片的url
 project_dir = os.path.abspath(os.path.dirname(__file__))
@@ -93,4 +94,8 @@ IMAGES_STORE = os.path.join(project_dir, 'images')  # 配置图片下载路径
 #HTTPCACHE_STORAGE='scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 
-HOST='127.0.0.1'
+MYSQL_HOST = '127.0.0.1'
+MYSQL_DBNAME = 'article'
+MYSQL_USER = 'root'
+MYSQL_PASSWORD = 'root'
+
