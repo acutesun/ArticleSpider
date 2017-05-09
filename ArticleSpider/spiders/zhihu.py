@@ -98,7 +98,8 @@ class ZhihuSpider(scrapy.Spider):
                 yield scrapy.Request(url, dont_filter=True, headers=self.headers, callback=self.parse_all_url)
                 # dont_filter表示该请求不应被调度程序过滤.当您要多次执行相同的请求时使用此选项,以忽略重复的过滤器, 请谨慎使用,否则您将进入爬行循环
         else:
-            raise RuntimeError('登录失败!')
+
+            raise RuntimeError(text_json['msg'])
 
     def parse_question(self, response):
         question_id = 0
@@ -119,7 +120,7 @@ class ZhihuSpider(scrapy.Spider):
         item = loader.load_item()
         yield item
         yield scrapy.Request(self.start_answer_url.format(question_id, 20, 0), headers=self.headers,
-                             callback=self.parse_answer)
+                            callback=self.parse_answer)
 
     def parse_answer(self, response):
         answers = json.loads(response.text)
@@ -131,7 +132,7 @@ class ZhihuSpider(scrapy.Spider):
             answer_item['zhihu_id'] = answer['id']  # 感觉是回答的id
             answer_item['url'] = answer['url']
             answer_item['question_id'] = answer['question']['id']
-            answer_item['author_id'] = answer["author"]["id"] if "id" in answer["author"] else None
+            answer_item['author_id'] = answer["author"]["id"] if "id" in answer["author"] else None # 可能为空
             answer_item['content'] = answer["content"] if "content" in answer else None  # 可能为空
             answer_item['praise_num'] = answer['voteup_count']
             answer_item['comments_num'] = answer['comment_count']
@@ -151,4 +152,6 @@ class ZhihuSpider(scrapy.Spider):
 3. 处理验证码相关逻辑, 并把得到_xsrf字段通过meta传递给login函数
 4. 将得到的数据交给FormRequest请求, 并回调检查登录函数.check_login, 最后回调parse函数
 
+
+    对代码进行调式可以将多余的请求注释掉, 提高调试效率,如调试zhihu_answer时将请求zhihu_question注释. 后面加上# debug方便后面查找取消
 '''
