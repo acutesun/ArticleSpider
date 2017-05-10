@@ -57,7 +57,7 @@ class AticleItem(scrapy.Item):
     content = scrapy.Field()
 
     def get_insert_sql(self):  # 处理jobbole的插入
-        insert_sql = 'insert into zhihu_question(url_object_id, title, url, create_time) VALUES (%s, %s, %s, %s)'
+        insert_sql = ''
 
         params = ()
         return insert_sql, params
@@ -84,7 +84,7 @@ class ZhihuQuestionItem(scrapy.Item):  # 知乎问题item
         topics = ''.join(self['topics'])                    # str
         url = ''.join(self['url'])                          # str
         title = ''.join(self['title'])                      # str
-        content = ''.join(self['content']) if self['content'] else None
+        content = ''.join(self['content']) if self['content'] else ' no question content'
         answer_num = get_nums(self['answer_num'][0])        # int
         comments_num = get_nums(self['comments_num'][0])    # int
         watch_user_num = get_nums(self['watch_user_num'][0])  # int

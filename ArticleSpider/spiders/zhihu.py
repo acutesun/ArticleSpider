@@ -32,20 +32,21 @@ class ZhihuSpider(scrapy.Spider):
                        "st_answerer%29%5D.topics&limit={1}&offset={2}"
 
     def parse(self, response):
-        with open('2.html', 'wb') as f:
-            f.write(response.text)
         pass
 
     def parse_all_url(self, response):   # 获取当前页面所有的url
-
-        all_url = response.css('.question_link::attr(href)').extract()  # 提取当前界面所有问题url
-        for url in all_url:
-            match = re.match('.*?(/question/\d+).*?', url)  # 提取成该格式/question/54364750
-            if match:
-                url = match.group(1)
-            url = parse.urljoin(response.url, url)
-            print(url)
-            yield scrapy.Request(url, headers=self.headers, callback=self.parse_question)
+        all_urls = response.css("a::attr(href)").extract()
+        all_urls = [parse.urljoin(response.url, url) for url in all_urls]
+        all_urls = filter(lambda x: True if x.startswith("https") else False, all_urls)
+        for url in all_urls:
+            match_obj = re.match("(.*zhihu.com/question/(\d+))(/|$).*", url)
+            if match_obj:
+                # 如果提取到question相关的页面则下载后交由提取函数进行提取
+                request_url = match_obj.group(1)
+                yield scrapy.Request(request_url, headers=self.headers, callback=self.parse_question)
+            else:
+                # 如果不是question页面则直接进一步跟踪
+                yield scrapy.Request(url, headers=self.headers, callback=self.parse_all_url)
 
     def start_requests(self):   # spider入口函数, 直接请求知乎登录界面
         return [scrapy.Request(url='https://www.zhihu.com/#signin',
@@ -102,10 +103,11 @@ class ZhihuSpider(scrapy.Spider):
             raise RuntimeError(text_json['msg'])
 
     def parse_question(self, response):
+
         question_id = 0
-        match = re.match(r'.*?question/(\d+).*?', response.url)
+        match = re.match(r'(.*?/question/(\d+))(/|$).*', response.url)
         if match:
-            question_id = int(match.group(1))
+            question_id = int(match.group(2))
         loader = ItemLoader(ZhihuQuestionItem(), response=response)
         loader.add_value('zhihu_id', question_id)   # 问题id
         loader.add_css('topics', '.QuestionHeader-topics .Popover div::text')  # 话题
@@ -118,9 +120,12 @@ class ZhihuSpider(scrapy.Spider):
         loader.add_css('click_num', 'div.NumberBoard-item .NumberBoard-value::text')  # 问题浏览数量
         loader.add_value('crawl_time', datetime.now())  # 问题爬取时间
         item = loader.load_item()
+        item['content'] = item['content'] if 'content' in item.keys() else None  # 需要给空值设置默认值
         yield item
         yield scrapy.Request(self.start_answer_url.format(question_id, 20, 0), headers=self.headers,
                             callback=self.parse_answer)
+
+
 
     def parse_answer(self, response):
         answers = json.loads(response.text)
@@ -132,7 +137,7 @@ class ZhihuSpider(scrapy.Spider):
             answer_item['zhihu_id'] = answer['id']  # 感觉是回答的id
             answer_item['url'] = answer['url']
             answer_item['question_id'] = answer['question']['id']
-            answer_item['author_id'] = answer["author"]["id"] if "id" in answer["author"] else None # 可能为空
+            answer_item['author_id'] = answer["author"]["id"] if "id" in answer["author"] else None  # 可能为空
             answer_item['content'] = answer["content"] if "content" in answer else None  # 可能为空
             answer_item['praise_num'] = answer['voteup_count']
             answer_item['comments_num'] = answer['comment_count']
@@ -144,14 +149,14 @@ class ZhihuSpider(scrapy.Spider):
             scrapy.Request(next_url, headers=self.headers, callback=self.parse_answer)
 
 
-
-
 '''
 1. 在知乎爬虫的入口函数请求知乎登录界面, 在完成请求响应后回调gen_captcha方法
 2. 在gen_captcha方法中获取_xsrf字段, 这个是知乎发送给浏览器的, 需要同用户密码一同提交
 3. 处理验证码相关逻辑, 并把得到_xsrf字段通过meta传递给login函数
 4. 将得到的数据交给FormRequest请求, 并回调检查登录函数.check_login, 最后回调parse函数
-
+5. 调用parse_all_url获取当前所有的问题url, 回调parse_question处理问题item. 并在问题提取所有的question链接
+6. 将处理的question_item yield. 再请求answer的url并对answer_item进行处理.
+7. 使用pipeline将数据异步插入数据库. 需要在对应的item（ZhihuQuestionItem, ZhihuAnswerItem）中构造sql语句插入需要的字段
 
     对代码进行调式可以将多余的请求注释掉, 提高调试效率,如调试zhihu_answer时将请求zhihu_question注释. 后面加上# debug方便后面查找取消
 '''
