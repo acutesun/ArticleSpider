@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import scrapy
 from collections import namedtuple
+import scrapy
 import re
 import time
 import json
@@ -11,6 +11,10 @@ from datetime import datetime
 
 
 class ZhihuSpider(scrapy.Spider):
+    # 配置单独的settings, 优先级高于settings文件中配置参数, 会覆盖settings配置参数
+    custom_settings = {
+        'COOKIES_ENABLED': True
+    }
     name = "zhihu"
     allowed_domains = ["www.zhihu.com"]
     start_urls = ['http://www.zhihu.com/']
@@ -20,6 +24,7 @@ class ZhihuSpider(scrapy.Spider):
         'Origin': 'https: // www.zhihu.com',
         'Referer': 'https: // www.zhihu.com /',
     }
+
 
     User = namedtuple('User', ['account', 'passwd'])
     user = User('', '')
