@@ -52,8 +52,9 @@ COOKIES_ENABLED=False
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-   'ArticleSpider.middlewares.RUserAgentMiddleware': 543,
-   'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+   # 'ArticleSpider.middlewares.RUserAgentMiddleware': 543,
+   # 'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+   # 'ArticleSpider.middlewares.JSPageMiddleware': 2,
 }
 
 # Enable or disable extensions
@@ -70,8 +71,9 @@ ITEM_PIPELINES = {
    # 'ArticleSpider.pipelines.ArticleImagePipeline': 1,  # 配置这个pipeline下载图片文件
    # 'ArticleSpider.pipelines.JsonWithExporterPipeline': 2,
    # 'ArticleSpider.pipelines.MysqlPipeline': 1,
-   'ArticleSpider.pipelines.MysqlTwistedPipeline': 3,
+   # 'ArticleSpider.pipelines.MysqlTwistedPipeline': 3,
 }
+
 IMAGES_URLS_FIELD = "front_image_url"  # 去item中找到图片的url
 project_dir = os.path.abspath(os.path.dirname(__file__))
 IMAGES_STORE = os.path.join(project_dir, 'images')  # 配置图片下载路径

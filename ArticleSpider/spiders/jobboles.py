@@ -5,7 +5,10 @@ from scrapy.http import Request
 from urllib import parse
 from ArticleSpider.items import AticleItem, AticleItemLoader
 from ArticleSpider.utils import common
-from scrapy.loader import ItemLoader
+from scrapy import signals
+from scrapy.xlib.pydispatch import dispatcher
+from selenium import webdriver
+import os
 
 
 class JobbolesSpider(scrapy.Spider):
@@ -13,20 +16,29 @@ class JobbolesSpider(scrapy.Spider):
     # allowed_domains = ["bolg.jobbole.com"]
     start_urls = ["http://blog.jobbole.com/all-posts"]
 
+    def __init__(self):
+        self.browser = webdriver.Chrome(executable_path='/python/ArticleSpider/tools/chromedriver')
+        super(JobbolesSpider, self).__init__()
+        dispatcher.connect(self.close_chrome, signals.spider_closed)  # 当爬虫关闭时发送信号, 处理函数close_chrome执行
+
+    def close_chrome(self):
+        print('爬虫退出关闭chrome!')
+        self.browser.quit()
+
     def parse(self, response):
-
-        post_nodes = response.css('#archive .floated-thumb .post-thumb a')  # 1.获取当前页面的url图片url列表并交给scrapy下载
-        for post_node in post_nodes:
-            post_url = post_node.css('::attr(href)').extract_first()
-            image_url = post_node.css('img::attr(src)').extract_first()     # 获取图片的url
-            yield Request(url=parse.urljoin(response.url, post_url),        # 注意这里我暂时改为post_url，因为数据太多了。
-                          meta={'front_image_url': image_url}, callback=self.parse_detail)
-
-        next_url = response.css('.next.page-numbers::attr(href)').extract_first()  # 2. 获取下一页url列表并交给scrapy下载
-        if next_url:
-            print(parse.urljoin(response.url, next_url))
-            yield Request(parse.urljoin(response.url, post_url), callback=self.parse)
-            print('yield request')
+        print(response.text)
+        # post_nodes = response.css('#archive .floated-thumb .post-thumb a')  # 1.获取当前页面的url图片url列表并交给scrapy下载
+        # for post_node in post_nodes:
+        #     post_url = post_node.css('::attr(href)').extract_first()
+        #     image_url = post_node.css('img::attr(src)').extract_first()     # 获取图片的url
+        #     yield Request(url=parse.urljoin(response.url, post_url),        # 注意这里我暂时改为post_url，因为数据太多了。
+        #                   meta={'front_image_url': image_url}, callback=self.parse_detail)
+        #
+        # next_url = response.css('.next.page-numbers::attr(href)').extract_first()  # 2. 获取下一页url列表并交给scrapy下载
+        # if next_url:
+        #     print(parse.urljoin(response.url, next_url))
+        #     yield Request(parse.urljoin(response.url, post_url), callback=self.parse)
+        #     print('yield request')
 
     def parse_detail(self, response):
 

@@ -7,6 +7,9 @@
 
 from scrapy import signals
 from fake_useragent import UserAgent
+from selenium import webdriver
+import time
+from scrapy.http import HtmlResponse
 
 
 class ArticlespiderSpiderMiddleware(object):
@@ -73,3 +76,14 @@ class RUserAgentMiddleware(object):
         else:
             raise RuntimeError('user-agent is null in RUserAgentMiddleware')
 
+
+class JSPageMiddleware(object):  # 需要在settings中配置生效
+
+    def process_request(self, request, spider):  # 处理动态加载的网页
+        if spider.name == 'jobboles':
+            spider.browser.get(request.url)  # 使用spider创建的chrome动态加载js页面
+            time.sleep(1)
+            print('访问：{0}'.format(request.url))
+            # 对已经交给chrome处理url返回, 不再交给downloader请求下载
+            return HtmlResponse(url=spider.browser.current_url,
+                                body=spider.browser.page_source, encoding='utf-8', request=request)
