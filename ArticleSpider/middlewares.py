@@ -7,9 +7,14 @@
 
 from scrapy import signals
 from fake_useragent import UserAgent
-from selenium import webdriver
 import time
 from scrapy.http import HtmlResponse
+import logging
+from tools.user_agent import user_agent, browsers
+from random import randint
+
+
+logging.basicConfig(level=logging.DEBUG, datefmt='%a, %d %b %Y %H:%M:%S', filename='./ua.log', filemode='w')
 
 
 class ArticlespiderSpiderMiddleware(object):
@@ -70,16 +75,15 @@ class RUserAgentMiddleware(object):
         return cls(crawler)
 
     def process_request(self, request, spider):
-        if self.ua:
-            ua_agent = self.ua.random
-            request.headers.setdefault(b'User-Agent', self.ua.random)
-        else:
-            raise RuntimeError('user-agent is null in RUserAgentMiddleware')
+        if spider.name != 'zhihu':
+            ua = user_agent[browsers[randint(0, 4)]][randint(0, 49)]
+            request.headers.setdefault(b'User-Agent', ua)
 
 
 class JSPageMiddleware(object):  # 需要在settings中配置生效
 
     def process_request(self, request, spider):  # 处理动态加载的网页
+
         if spider.name == 'jobboles':
             spider.browser.get(request.url)  # 使用spider创建的chrome动态加载js页面
             time.sleep(1)

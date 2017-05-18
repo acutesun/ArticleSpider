@@ -25,9 +25,6 @@ class ZhihuSpider(scrapy.Spider):
         'Referer': 'https: // www.zhihu.com /',
     }
 
-
-    User = namedtuple('User', ['account', 'passwd'])
-    user = User('', '')
     start_answer_url = "https://www.zhihu.com/api/v4/questions/{0}/answers?sort_by=default&include=data%5B%2A%5D." \
                        "is_normal%2Cis_sticky%2Ccollapsed_by%2Csuggest_edit%2Ccomment_count%2Ccollapsed_counts%2Crev" \
                        "iewing_comments_count%2Ccan_comment%2Ccontent%2Ceditable_content%2Cvoteup_count%2Creshipment_" \
@@ -51,7 +48,8 @@ class ZhihuSpider(scrapy.Spider):
                 yield scrapy.Request(request_url, headers=self.headers, callback=self.parse_question)
             else:
                 # 如果不是question页面则直接进一步跟踪
-                yield scrapy.Request(url, headers=self.headers, callback=self.parse_all_url)
+                # yield scrapy.Request(url, headers=self.headers, callback=self.parse_all_url)
+                pass
 
     def start_requests(self):   # spider入口函数, 直接请求知乎登录界面
         return [scrapy.Request(url='https://www.zhihu.com/#signin',
